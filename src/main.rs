@@ -46,7 +46,7 @@ impl Position {
         stop_coordinates_cw: &Position,
         stop_coordinates_ccw: &Position,
     ) {
-        let theta_step: f64 =  15_f64.to_radians(); // Angle increment in radians
+        let theta_step: f64 =  5_f64.to_radians(); // Angle increment in radians
         let theta_step = if direction == "CW" { -theta_step } else { theta_step }; // Adjust step based on direction
         let num_steps = (2.0 * std::f64::consts::PI * radius / theta_step.abs()).ceil() as usize;
         for i in 0..num_steps {
@@ -154,6 +154,10 @@ mod tests {
         let target_position = Position::new(5.0, 5.0, 5.0);
         let stop_coordinates = Position::new(5.0, 5.0, 5.0);
         current_position.linear_move(&target_position, &stop_coordinates);
+
+        assert_eq!(current_position.x, stop_coordinates.x);
+        assert_eq!(current_position.y, stop_coordinates.y);
+        assert_eq!(current_position.z, stop_coordinates.z);
         // Add assertions to verify the correctness of linear_move function
     }
 
@@ -166,6 +170,10 @@ mod tests {
         let stop_coordinates_cw = Position::new(7.5, 7.5, 5.0);
         let stop_coordinates_ccw = Position::new(5.0, 5.0, 5.0);
         current_position.circular_move(&center, radius, "CW", &stop_coordinates_cw, &stop_coordinates_ccw);
+        println!("{}, {}, {}", current_position.x, current_position.y, current_position.z);
+        assert_eq!(current_position.x, stop_coordinates_cw.x);
+        assert_eq!(current_position.y, stop_coordinates_cw.y);
+        assert_eq!(current_position.z, stop_coordinates_cw.z);
         // Add assertions to verify the correctness of circular_move function
     }
 }
