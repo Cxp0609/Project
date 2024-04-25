@@ -2,15 +2,29 @@ use std::fs::File;
 use std::io::{self, BufRead};
 use std::path::Path;
 
+/// Represents a position in 3D space.
 #[derive(Clone, Copy, Debug)]
 pub struct Position {
+    /// The x-coordinate of the position.
     x: f64,
+    /// The y-coordinate of the position.
     y: f64,
+    /// The z-coordinate of the position.
     z: f64,
 }
 
 impl Position {
     /// Creates a new Position instance with the given coordinates.
+    ///
+    /// # Arguments
+    ///
+    /// * `x` - The x-coordinate.
+    /// * `y` - The y-coordinate.
+    /// * `z` - The z-coordinate.
+    ///
+    /// # Returns
+    ///
+    /// A new `Position` instance.
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Position { x, y, z }
     }
@@ -18,6 +32,11 @@ impl Position {
     /// Moves the position linearly towards the target position.
     ///
     /// Stops when the position is within a small distance of the stop coordinates.
+    ///
+    /// # Arguments
+    ///
+    /// * `target` - The target position to move towards.
+    /// * `stop_coordinates` - The stop coordinates indicating when to stop the movement.
     pub fn linear_move(&mut self, target: &Position, stop_coordinates: &Position) {
         let dx = (target.x - self.x) / 5.0;
         let dy = (target.y - self.y) / 5.0;
@@ -38,6 +57,14 @@ impl Position {
     /// Moves the position along a circular path.
     ///
     /// Stops when the position is within a small distance of the stop coordinates.
+    ///
+    /// # Arguments
+    ///
+    /// * `center` - The center position of the circular path.
+    /// * `radius` - The radius of the circular path.
+    /// * `direction` - The direction of movement ("CW" for clockwise, "CCW" for counterclockwise).
+    /// * `stop_coordinates_cw` - The stop coordinates for clockwise movement.
+    /// * `stop_coordinates_ccw` - The stop coordinates for counterclockwise movement.
     pub fn circular_move(
         &mut self,
         center: &Position,
@@ -51,23 +78,26 @@ impl Position {
         let num_steps = (2.0 * std::f64::consts::PI * radius / theta_step.abs()).ceil() as usize;
         for i in 0..num_steps {
             let theta = (i as f64) * theta_step;
-            let x = center.x + radius * theta.cos();
-            let y = center.y + radius * theta.sin();
-            let z = center.z;
-            println!("{:.2}, {:.2}, {:.2}", x, y, z);
+            self.x = center.x + radius * theta.cos();
+            self.y = center.y + radius * theta.sin();
+            self.z = center.z;
+            println!("{:.2}, {:.2}, {:.2}", self.x, self.y, self.z);
             let stop_coordinates = if direction == "CW" {
                 stop_coordinates_cw
             } else {
                 stop_coordinates_ccw
             };
-            let distance = ((x - stop_coordinates.x).powi(2) + (y - stop_coordinates.y).powi(2) + (z - stop_coordinates.z).powi(2)).sqrt();
+            let distance = ((self.x - stop_coordinates.x).powi(2) + (self.y - stop_coordinates.y).powi(2) + (self.z - stop_coordinates.z).powi(2)).sqrt();
             if distance < 0.001 { // Adjust the threshold as needed
-                println!("Reached stop coordinates: {:.2}, {:.2}, {:.2}", x, y, z);
+                println!("Reached stop coordinates: {:.2}, {:.2}, {:.2}", self.x, self.y, self.z);
                 break;
             }
         }
     }
 }
+
+// Main function and tests...
+
 
 fn main() -> io::Result<()> {
     let file_path = "code.cmmd"; 
@@ -162,18 +192,21 @@ mod tests {
     }
 
     #[test]
+    
     fn test_circular_move() {
         // Test cases for circular_move function
         let mut current_position = Position::new(0.0, 0.0, 0.0);
-        let center = Position::new(1.0, 1.0, 1.0);
-        let radius = 5.0;
-        let stop_coordinates_cw = Position::new(7.5, 7.5, 5.0);
-        let stop_coordinates_ccw = Position::new(5.0, 5.0, 5.0);
+        let center = Position::new(1.25, 1.25, 5.0);
+        let radius = ((7.5 - center.x).powi(2) + (7.5 - center.y).powi(2) + (5.0 - center.z).powi(2)).sqrt(); // Calculate radius dynamically
+        let stop_coordinates_cw = Position::new(7.5, 7.5, 5.0); // Adjust as needed
+        let stop_coordinates_ccw = Position::new(5.0, 5.0, 5.0); // Adjust as needed
         current_position.circular_move(&center, radius, "CW", &stop_coordinates_cw, &stop_coordinates_ccw);
-        println!("{}, {}, {}", current_position.x, current_position.y, current_position.z);
-        assert_eq!(current_position.x, stop_coordinates_cw.x);
-        assert_eq!(current_position.y, stop_coordinates_cw.y);
-        assert_eq!(current_position.z, stop_coordinates_cw.z);
-        // Add assertions to verify the correctness of circular_move function
-    }
+    
+        // Allow for a small tolerance (e.g., 0.001) when comparing floating-point numbers
+        let tolerance = 0.001;
+        assert!((current_position.x - stop_coordinates_cw.x).abs() < tolerance);
+        assert!((current_position.y - stop_coordinates_cw.y).abs() < tolerance);
+        assert!((current_position.z - stop_coordinates_cw.z).abs() < tolerance);
+}
+
 }
